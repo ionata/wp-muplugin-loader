@@ -19,24 +19,6 @@ In your project's `composer.json` file, require this package.
 	"lkwdwrd/wp-muplugin-loader": "~1.0.0",
 }
 ```
-Make sure in the `extras` of your `composer.json` you have your mu-plugins path defined.
-
-```json
-"extra": {
-	"installer-paths": {
-		"app/wp-content/themes/{$name}": [
-			"type:wordpress-theme"
-		],
-		"app/wp-content/plugins/{$name}": [
-			"type:wordpress-plugin"
-		],
-		"app/wp-content/mu-plugins/{$name}": [
-			"type:wordpress-muplugin"
-		]
-	},
-	"wordpress-install-dir": "app/wp"
-}
-```
 
 And that's it.
 
@@ -59,19 +41,7 @@ This is compatible with [WPackagist](https://wpackagist.org/). When adding plugi
 "extra": {
 	"force-mu": [
 		"rest-api"
-	],
-	"installer-paths": {
-		"app/wp-content/themes/{$name}": [
-			"type:wordpress-theme"
-		],
-		"app/wp-content/plugins/{$name}": [
-			"type:wordpress-plugin"
-		],
-		"app/wp-content/mu-plugins/{$name}": [
-			"type:wordpress-muplugin"
-		]
-	},
-	"wordpress-install-dir": "app/wp"
+	]
 }
 ```
 

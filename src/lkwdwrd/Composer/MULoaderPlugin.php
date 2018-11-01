@@ -19,6 +19,7 @@ use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\Installers\WordpressInstaller;
 use LkWdwrd\MU_Loader\Util;
 
 /**
@@ -47,6 +48,11 @@ class MULoaderPlugin implements PluginInterface, EventSubscriberInterface {
 	 */
 	private $config;
 	/**
+	 * Holds the main Composer object.
+	 * @var Composer\Composer
+	 */
+	private $composer;
+	/**
 	 * Stores the extras array and config object for later use.
 	 *
 	 * @param Composer    $composer The main Composer object.
@@ -56,6 +62,7 @@ class MULoaderPlugin implements PluginInterface, EventSubscriberInterface {
 	public function activate( Composer $composer, IOInterface $io ) {
 		$this->extras = $composer->getPackage()->getExtra();
 		$this->config = $composer->getConfig();
+		$this->composer = $composer;
 	}
 	/**
 	 * Subscribes to autoload dump and package install events.
@@ -127,11 +134,6 @@ class MULoaderPlugin implements PluginInterface, EventSubscriberInterface {
 	public function dumpRequireFile() {
 		$muRelPath = $this->findMURelPath();
 
-		// If we didn't find a relative MU Plugins path, bail.
-		if ( ! $muRelPath ) {
-			return;
-		}
-
 		// Find the relative path from the mu-plugins dir to the mu-loader file.
 		$muPath = $this->resolveMURelPath( $muRelPath );
 		$ds = $this->getDirectorySeparator();
@@ -148,34 +150,22 @@ class MULoaderPlugin implements PluginInterface, EventSubscriberInterface {
 		);
 	}
 	/**
-	 * Extracts the Must-Use Plugins directory from the exta definition.
+	 * Get the Must-Use Plugins directory path.
 	 *
-	 * The Composer Installers plugins uses a specific extras definition to
-	 * determine where Must-User plugins should be installed. This method makes
-	 * sure that the type definition exists there, and if so, extracts the
-	 * path, stripped of the `{name}` token, and returns it.
+	 * This method mocks a `wordpress-muplugin` package with a normally invalid
+	 * vendor/package name that is then used to retreive the current configured
+	 * `mu-plugins` directory.
 	 *
-	 * If the lookup fails, this method returns false.
-	 *
-	 * @return String|Bool Either the relative path or false.
+	 * @return String The relative path.
 	 */
 	protected function findMURelPath() {
-		$path = false;
-		// Only keep going if we have install-paths in extras.
-		if ( empty( $this->extras['installer-paths'] ) || ! is_array( $this->extras['installer-paths'] ) ) {
-			return false;
-		}
-		// Find the array to the mu-plugin path.
-		foreach( $this->extras['installer-paths'] as $path => $types ) {
-			if ( ! is_array( $types ) ) {
-				continue;
-			}
-			if ( ! in_array( 'type:wordpress-muplugin', $types ) ) {
-				continue;
-			}
-			$path = str_replace( '{$name}', '', $path );
-			break;
-		}
+		$package = new \Composer\Package\Package( null, null, null );
+		$package->setType( 'wordpress-muplugin' );
+
+		$wordpressInstaller = new WordpressInstaller( $package, $this->composer );
+
+		$path = $wordpressInstaller->getInstallPath( $package, 'wordpress' );
+
 		return $path;
 	}
 	/**
